@@ -1,10 +1,9 @@
 import streamlit as st
-import asyncio
 import os
 import random
-from datetime import datetime
-from openai import OpenAI
 import json
+from openai import OpenAI
+from datetime import datetime
 
 # 尝试加载环境变量
 try:
@@ -16,7 +15,7 @@ except ImportError:
 
 # 页面配置
 st.set_page_config(
-    page_title="AI旅行规划代理 - OpenAI版",
+    page_title="AI旅行规划代理 - DeepSeek版",
     page_icon="🏖️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -58,26 +57,38 @@ st.markdown("""
         border-radius: 8px;
         font-weight: bold;
     }
+    .deepseek-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        margin-left: 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-class OpenAITravelAgent:
+class DeepSeekTravelAgent:
     def __init__(self):
         self.client = None
         self.initialized = False
         
     def initialize(self):
-        """初始化OpenAI客户端"""
+        """初始化DeepSeek客户端"""
         try:
             # 从环境变量或secrets获取配置
-            api_key = os.environ.get("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+            api_key = os.environ.get("DEEPSEEK_API_KEY") or st.secrets.get("DEEPSEEK_API_KEY")
             
             if not api_key:
-                return False, "❌ 未设置OpenAI API密钥"
+                return False, "❌ 未设置DeepSeek API密钥"
             
-            self.client = OpenAI(api_key=api_key)
+            # 配置DeepSeek客户端
+            self.client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.deepseek.com/v1"  # DeepSeek API端点
+            )
             self.initialized = True
-            return True, "✅ OpenAI客户端初始化成功"
+            return True, "✅ DeepSeek客户端初始化成功"
             
         except Exception as e:
             return False, f"❌ 初始化失败: {str(e)}"
@@ -89,7 +100,8 @@ class OpenAITravelAgent:
             "纽约, 美国", "伦敦, 英国", "悉尼, 澳大利亚",
             "罗马, 意大利", "京都, 日本", "新加坡",
             "开普敦, 南非", "里约热内卢, 巴西", "迪拜, 阿联酋",
-            "北京, 中国", "上海, 中国", "香港, 中国", "台北, 台湾"
+            "北京, 中国", "上海, 中国", "香港, 中国", "台北, 台湾",
+            "清迈, 泰国", "巴厘岛, 印度尼西亚", "布拉格, 捷克"
         ]
         return random.choice(destinations)
     
@@ -103,7 +115,9 @@ class OpenAITravelAgent:
             "💊 准备常用药品和防晒用品",
             "🔌 带上合适的电源转换插头",
             "📞 保存大使馆联系方式",
-            "🎒 复印重要证件并分开存放"
+            "🎒 复印重要证件并分开存放",
+            "🌡️ 了解目的地气候和季节特点",
+            "🍽️ 研究当地饮食文化和特色美食"
         ]
         return "\n".join(tips)
     
@@ -124,29 +138,44 @@ class OpenAITravelAgent:
             
             if any(keyword in user_input for keyword in ["贴士", "建议", "提示", "注意", "准备"]):
                 tips = self.get_travel_tips()
-                tools_used.append("💡 提供了旅行贴士")
+                tools_used.append("💡 提供了基础旅行贴士")
                 enhanced_prompt = f"{user_input}\n\n参考旅行贴士: {tips}"
             
             # 完整的系统提示词
             system_message = """你是一个专业、友好、经验丰富的旅行规划专家。请用中文回复，遵循以下原则：
 
-1. **个性化服务**：根据用户需求提供定制化建议
-2. **详细具体**：提供具体的景点、餐厅、交通方式
-3. **实用建议**：包括预算、时间安排、注意事项
-4. **格式清晰**：使用适当的标题、列表和分段
-5. **热情友好**：保持积极、鼓励的语气
+# 角色设定
+你是资深的旅行规划师，拥有10年以上全球旅行规划经验，熟悉各国文化、景点、美食和交通。
+
+# 回复要求
+1. **个性化服务**：根据用户具体需求提供定制化建议
+2. **详细具体**：提供具体的景点名称、餐厅推荐、交通方式、时间安排
+3. **实用建议**：包括预算估算、最佳季节、注意事项、省钱技巧
+4. **格式清晰**：使用适当的标题、列表、分段，让内容易于阅读
+5. **热情友好**：保持积极、鼓励的语气，让用户感受到专业和温暖
+6. **文化敏感**：尊重各地文化差异，提供文化体验建议
+
+# 内容结构
+- 行程概览
+- 每日详细安排
+- 餐饮推荐
+- 交通指南
+- 预算分析
+- 实用贴士
+- 文化体验
 
 请为用户创造难忘的旅行体验！"""
             
-            # 调用OpenAI
+            # 调用DeepSeek API
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",  # 可以改为 gpt-4, gpt-3.5-turbo 等
+                model="deepseek-chat",  # DeepSeek的主要模型
                 messages=[
                     {"role": "system", "content": system_message},
                     {"role": "user", "content": enhanced_prompt}
                 ],
                 temperature=0.7,
-                max_tokens=1500
+                max_tokens=2000,
+                stream=False
             )
             
             ai_response = response.choices[0].message.content
@@ -159,20 +188,26 @@ class OpenAITravelAgent:
             return ai_response
             
         except Exception as e:
-            return f"❌ 处理请求时出错: {str(e)}"
+            error_msg = str(e)
+            if "quota" in error_msg.lower() or "limit" in error_msg.lower():
+                return "❌ API调用额度已用完，请检查DeepSeek账户余额或等待额度重置"
+            elif "auth" in error_msg.lower() or "key" in error_msg.lower():
+                return "❌ API密钥无效，请检查DeepSeek API密钥配置"
+            else:
+                return f"❌ 处理请求时出错: {error_msg}"
 
 # 初始化session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "agent" not in st.session_state:
-    st.session_state.agent = OpenAITravelAgent()
+    st.session_state.agent = DeepSeekTravelAgent()
 if "agent_status" not in st.session_state:
     st.session_state.agent_status = "未初始化"
 if "conversation_count" not in st.session_state:
     st.session_state.conversation_count = 0
 
 # 标题和介绍
-st.markdown('<h1 class="main-header">🏖️ AI 智能旅行规划代理</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">🏖️ AI 智能旅行规划代理 <span class="deepseek-badge">DeepSeek</span></h1>', unsafe_allow_html=True)
 
 # 侧边栏
 with st.sidebar:
@@ -214,7 +249,9 @@ with st.sidebar:
         ("🌅 单日游", "规划一个充实的一日游行程"),
         ("💡 旅行贴士", "给我全面的旅行准备建议和贴士"),
         ("🏨 周末之旅", "规划一个放松的周末短途旅行"),
-        ("💰 预算旅行", "推荐经济实惠的旅行方案")
+        ("💰 预算旅行", "推荐经济实惠的旅行方案"),
+        ("🌍 文化体验", "推荐有文化深度的旅行体验"),
+        ("🍽️ 美食之旅", "规划以美食为主题的旅行")
     ]
     
     for text, command in quick_actions:
@@ -234,9 +271,19 @@ with st.sidebar:
     st.subheader("💡 使用提示")
     st.markdown("""
     - 🎯 **具体需求**获得更好结果
-    - 🌍 **指定偏好**如预算、兴趣
-    - 💬 **多轮对话**完善计划
+    - 🌍 **指定偏好**如预算、兴趣、季节
+    - 💬 **多轮对话**完善旅行计划
     - ⚡ **先初始化**代理再使用
+    - 🆓 **DeepSeek** 提供免费API额度
+    """)
+    
+    st.markdown("---")
+    st.subheader("🔑 获取API密钥")
+    st.markdown("""
+    1. 访问 [DeepSeek平台](https://platform.deepseek.com)
+    2. 注册账户并验证
+    3. 在API密钥页面创建密钥
+    4. 免费额度足够个人使用
     """)
 
 # 主对话区域
@@ -245,8 +292,9 @@ chat_container = st.container()
 with chat_container:
     # 显示欢迎信息
     if len(st.session_state.messages) == 0:
-        st.markdown('<div class="system-message">🚀 欢迎使用 AI 旅行规划代理！</div>', unsafe_allow_html=True)
-        st.markdown('<div class="system-message">💡 我可以帮您：规划旅行行程、推荐目的地、提供旅行建议、制定预算等</div>', unsafe_allow_html=True)
+        st.markdown('<div class="system-message">🚀 欢迎使用基于DeepSeek的AI旅行规划代理！</div>', unsafe_allow_html=True)
+        st.markdown('<div class="system-message">💡 我可以帮您：规划旅行行程、推荐目的地、提供详细旅行建议</div>', unsafe_allow_html=True)
+        st.markdown('<div class="system-message">🎯 基于DeepSeek大模型，提供智能、专业的旅行规划服务</div>', unsafe_allow_html=True)
         st.markdown('<div class="system-message">👇 请在侧边栏点击"初始化AI代理"，然后开始使用</div>', unsafe_allow_html=True)
     
     # 显示对话历史
@@ -265,7 +313,7 @@ input_col1, input_col2 = st.columns([4, 1])
 with input_col1:
     user_input = st.text_input(
         "输入您的旅行需求:",
-        placeholder="例如：帮我规划一个巴黎三日游，预算中等..." if st.session_state.agent.initialized else "请先在侧边栏初始化AI代理...",
+        placeholder="例如：帮我规划一个巴黎三日游，预算中等，喜欢文化和美食..." if st.session_state.agent.initialized else "请先在侧边栏初始化AI代理...",
         label_visibility="collapsed",
         disabled=not st.session_state.agent.initialized
     )
@@ -295,7 +343,7 @@ if send_button and user_input and st.session_state.agent.initialized:
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: #6c757d;'>"
-    "🤖 基于 OpenAI GPT-4 构建 | 🏖️ AI 旅行规划代理 | 🌐 部署于 Streamlit Cloud"
+    "🤖 基于 DeepSeek 大模型构建 | 🏖️ AI 旅行规划代理 | 🌐 部署于 Streamlit Cloud"
     "</div>",
     unsafe_allow_html=True
 )
