@@ -109,30 +109,30 @@ st.markdown("""
         white-space: pre-wrap;
     }
     
-    /* 欢迎卡片 - 深色半透明 */
+    /* 欢迎卡片 - 紧凑简洁 */
     .welcome-card {
-        background: rgba(68, 70, 84, 0.9);
-        backdrop-filter: blur(20px);
-        border-radius: 20px;
-        padding: 2.5rem;
-        margin: 2rem 0;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(68, 70, 84, 0.85);
+        backdrop-filter: blur(15px);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         text-align: center;
     }
     
     .welcome-title {
-        font-size: 2rem;
+        font-size: 1.35rem;
         font-weight: 600;
         color: white;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
     }
     
     .welcome-text {
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 1rem;
-        line-height: 1.6;
-        margin: 0.75rem 0;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0.5rem 0;
     }
     
     /* 侧边栏样式 */
