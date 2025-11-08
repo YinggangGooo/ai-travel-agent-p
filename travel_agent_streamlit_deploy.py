@@ -4,6 +4,7 @@ import random
 import json
 from openai import OpenAI
 from datetime import datetime
+import base64
 
 # 尝试加载环境变量
 try:
@@ -15,393 +16,243 @@ except ImportError:
 
 # 页面配置
 st.set_page_config(
-    page_title="AI旅行规划助手",
-    page_icon="✈️",
+    page_title="AI旅行规划代理 - DeepSeek版",
+    page_icon="🏖️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# 现代深色风格的CSS样式 - 优化版
+# 设置背景图片的函数
+def set_background(image_file):
+    """
+    设置背景图片
+    """
+    with open(image_file, "rb") as f:
+        img_data = f.read()
+    b64_encoded = base64.b64encode(img_data).decode()
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/jpg;base64,{b64_encoded}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# 玻璃材质CSS样式
 st.markdown("""
 <style>
-    /* 全局样式 - 添加背景图片 */
+    /* 全局样式 */
     .stApp {
-        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), 
-                    url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&q=80');
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }
     
-    /* 主容器 */
-    .main .block-container {
-        max-width: 900px;
-        padding-top: 2rem;
-        padding-bottom: 3rem;
+    /* 主容器样式 */
+    .main-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 20px;
+        margin: 10px 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     }
     
-    /* 顶部标题区域 - 透明简洁 */
-    .header-container {
-        background: transparent;
-        padding: 1rem 0;
-        margin-bottom: 1.5rem;
-        text-align: center;
-    }
-    
-    .main-title {
-        font-size: 1.8rem;
-        font-weight: 600;
+    /* 主标题样式 */
+    .main-header {
+        font-size: 3rem;
         color: white;
-        margin: 0;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    }
-    
-    .subtitle {
-        font-size: 0.95rem;
-        color: rgba(255, 255, 255, 0.8);
-        margin-top: 0.5rem;
-        text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
-    }
-    
-    /* 对话消息样式 - 增强对比度 */
-    .chat-message {
-        padding: 1.25rem 1.5rem;
-        margin: 0.75rem 0;
-        border-radius: 16px;
-        animation: fadeIn 0.3s ease-in;
-        line-height: 1.6;
-        position: relative;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .user-message {
-        background: rgba(45, 45, 45, 0.95) !important;
+        text-align: center;
+        margin-bottom: 2rem;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.15);
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        margin-left: auto;
-        max-width: 85%;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        padding: 20px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* 消息样式 */
+    .user-message {
+        background: rgba(255, 255, 255, 0.25);
+        padding: 20px;
+        border-radius: 18px;
+        margin: 15px 0;
+        border-left: 5px solid rgba(255, 255, 255, 0.6);
+        color: white;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
     
     .assistant-message {
-        background: rgba(60, 60, 60, 0.95) !important;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 20px;
+        border-radius: 18px;
+        margin: 15px 0;
+        border-left: 5px solid rgba(255, 255, 255, 0.4);
+        color: white;
         backdrop-filter: blur(10px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        max-width: 95%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
     
-    .message-role {
-        font-weight: 600;
-        font-size: 0.875rem;
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: rgba(255, 255, 255, 0.95);
+    .system-message {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 15px;
+        border-radius: 15px;
+        margin: 10px 0;
+        border-left: 4px solid rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1em;
+        backdrop-filter: blur(10px);
     }
     
-    .message-content {
-        color: rgba(255, 255, 255, 0.98);
-        font-size: 0.95rem;
-        white-space: pre-wrap;
-        line-height: 1.7;
-    }
-    
-    /* 欢迎卡片 - 紧凑清晰设计 */
-    .welcome-card {
-        background: rgba(45, 45, 45, 0.92) !important;
-        backdrop-filter: blur(15px);
-        border-radius: 16px;
-        padding: 1.5rem 2rem;
-        margin: 1rem 0;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        text-align: center;
-    }
-    
-    .welcome-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: white;
-        margin-bottom: 0.75rem;
-    }
-    
-    .welcome-text {
-        color: rgba(255, 255, 255, 0.85);
-        font-size: 0.9rem;
-        line-height: 1.5;
-        margin: 0.5rem 0;
-    }
-    
-    /* 侧边栏样式 */
-    section[data-testid="stSidebar"] {
-        background: rgba(30, 30, 30, 0.95) !important;
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    section[data-testid="stSidebar"] > div {
-        background: transparent !important;
-    }
-    
-    section[data-testid="stSidebar"] h1,
-    section[data-testid="stSidebar"] h2,
-    section[data-testid="stSidebar"] h3 {
-        color: white;
-        font-weight: 600;
-    }
-    
-    section[data-testid="stSidebar"] .element-container {
-        color: white;
-    }
-    
-    section[data-testid="stSidebar"] p,
-    section[data-testid="stSidebar"] label,
-    section[data-testid="stSidebar"] span {
-        color: rgba(255, 255, 255, 0.9) !important;
-    }
-    
-    /* 按钮样式 - 增强可见性 */
+    /* 按钮样式 */
     .stButton button {
-        background: rgba(255, 255, 255, 0.15) !important;
-        color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.25) !important;
-        border-radius: 12px !important;
-        font-weight: 600 !important;
-        padding: 0.7rem 1.5rem !important;
-        font-size: 0.95rem !important;
-        transition: all 0.2s ease !important;
-        width: 100% !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 12px 24px;
+        transition: all 0.3s ease;
+        width: 100%;
+        backdrop-filter: blur(10px);
     }
     
     .stButton button:hover {
-        background: rgba(255, 255, 255, 0.25) !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.5);
     }
     
-    .stButton button:active {
-        transform: translateY(0) !important;
+    /* 侧边栏样式 */
+    .css-1d391kg, .css-1lcbmhc {
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    /* 主要按钮样式 */
-    .stButton button[kind="primary"] {
-        background: rgba(59, 130, 246, 0.8) !important;
-        border: 1px solid rgba(59, 130, 246, 0.9) !important;
-        color: white !important;
-        font-weight: 600 !important;
-    }
-    
-    .stButton button[kind="primary"]:hover {
-        background: rgba(59, 130, 246, 0.9) !important;
-        border: 1px solid rgba(59, 130, 246, 1) !important;
-        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4) !important;
-    }
-    
-    /* 输入框样式 - 增强对比度 */
+    /* 输入框样式 */
     .stTextInput input {
-        background: rgba(40, 40, 40, 0.95) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 12px !important;
-        padding: 0.9rem 1.25rem !important;
-        font-size: 0.95rem !important;
-        color: white !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        color: white;
+        padding: 12px;
+        font-size: 1em;
     }
     
     .stTextInput input:focus {
-        border: 1px solid rgba(59, 130, 246, 0.8) !important;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-        outline: none !important;
-        background: rgba(40, 40, 40, 1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
     }
     
     .stTextInput input::placeholder {
-        color: rgba(255, 255, 255, 0.6) !important;
+        color: rgba(255, 255, 255, 0.6);
     }
     
-    /* 输入区域容器 - 清晰背景 */
-    .input-container {
-        background: rgba(35, 35, 35, 0.95) !important;
-        backdrop-filter: blur(20px);
-        border-radius: 18px;
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-        box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.15);
+    /* 徽章样式 */
+    .deepseek-badge {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        padding: 6px 15px;
+        border-radius: 25px;
+        font-size: 0.9em;
+        margin-left: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
     }
     
-    /* 发送按钮特殊样式 */
-    .send-button {
-        background: rgba(59, 130, 246, 0.9) !important;
-        border: 1px solid rgba(59, 130, 246, 1) !important;
-        color: white !important;
-        border-radius: 12px !important;
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
-        padding: 0.8rem !important;
-        width: 100% !important;
-        height: 48px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+    /* 分隔线样式 */
+    .stMarkdown hr {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        margin: 25px 0;
     }
     
-    .send-button:hover {
-        background: rgba(59, 130, 246, 1) !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4) !important;
-    }
-    
-    .send-button:disabled {
-        background: rgba(100, 100, 100, 0.5) !important;
-        border: 1px solid rgba(100, 100, 100, 0.7) !important;
-        color: rgba(255, 255, 255, 0.5) !important;
-        cursor: not-allowed !important;
-    }
-    
-    /* 状态徽章 */
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        margin: 0.5rem 0;
+    /* 状态指示器 */
+    .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 10px;
     }
     
     .status-online {
-        background: rgba(34, 197, 94, 0.2);
-        color: #22c55e;
-        border: 1px solid rgba(34, 197, 94, 0.4);
+        background: #4CAF50;
+        box-shadow: 0 0 10px #4CAF50;
     }
     
     .status-offline {
-        background: rgba(239, 68, 68, 0.2);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.4);
+        background: #f44336;
+        box-shadow: 0 0 10px #f44336;
     }
     
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        animation: pulse 2s infinite;
+    /* 卡片样式 */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 20px;
+        margin: 15px 0;
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
     }
     
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+    /* 修复Streamlit默认组件样式 */
+    .st-bh, .st-bg, .st-be, .st-bf, .st-bi, .st-bj {
+        background: transparent !important;
     }
     
-    .status-dot-online {
-        background: #22c55e;
+    /* 文本颜色修复 */
+    .st-bb, .st-bc, .st-bd {
+        color: white !important;
     }
     
-    .status-dot-offline {
-        background: #ef4444;
-    }
-    
-    /* 信息卡片 */
-    .info-card {
-        background: rgba(45, 45, 45, 0.8);
-        border-radius: 12px;
-        padding: 1.25rem;
-        margin: 1rem 0;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-    }
-    
-    .info-card-title {
-        font-weight: 600;
-        color: white;
-        margin-bottom: 0.75rem;
-        font-size: 0.95rem;
-    }
-    
-    .info-card-content {
-        color: rgba(255, 255, 255, 0.85);
-        font-size: 0.9rem;
-        line-height: 1.6;
-    }
-    
-    /* 统计数字 */
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #22c55e;
-        margin: 0.5rem 0;
-    }
-    
-    /* 徽章 */
-    .badge {
-        display: inline-block;
-        padding: 0.35rem 0.75rem;
-        border-radius: 12px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        background: rgba(59, 130, 246, 0.2);
-        color: #3b82f6;
-        border: 1px solid rgba(59, 130, 246, 0.4);
-    }
-    
-    /* 滚动条 */
+    /* 滚动条样式 */
     ::-webkit-scrollbar {
         width: 8px;
-        height: 8px;
     }
     
     ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.1);
         border-radius: 4px;
     }
     
     ::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.3);
         border-radius: 4px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.5);
     }
     
-    /* 分隔线 */
-    hr {
-        border: none;
-        height: 1px;
+    /* 页脚样式 */
+    .footer {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        padding: 20px;
+        font-size: 0.9em;
         background: rgba(255, 255, 255, 0.1);
-        margin: 1.5rem 0;
-    }
-    
-    /* 隐藏Streamlit默认元素 */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    .stDeployButton {display: none;}
-    
-    /* 修复Streamlit默认文字颜色 */
-    .stMarkdown, .stText {
-        color: white;
-    }
-    
-    /* 优化空白区域 */
-    .stEmpty {
-        background: transparent !important;
-    }
-    
-    /* 聊天容器间距优化 */
-    .chat-container {
-        margin-bottom: 1rem;
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        margin-top: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -418,18 +269,18 @@ class DeepSeekTravelAgent:
             api_key = os.environ.get("DEEPSEEK_API_KEY") or st.secrets.get("DEEPSEEK_API_KEY")
             
             if not api_key:
-                return False, "未设置DeepSeek API密钥"
+                return False, "❌ 未设置DeepSeek API密钥"
             
             # 配置DeepSeek客户端
             self.client = OpenAI(
                 api_key=api_key,
-                base_url="https://api.deepseek.com/v1"
+                base_url="https://api.deepseek.com/v1"  # DeepSeek API端点
             )
             self.initialized = True
-            return True, "DeepSeek客户端初始化成功"
+            return True, "✅ DeepSeek客户端初始化成功"
             
         except Exception as e:
-            return False, f"初始化失败: {str(e)}"
+            return False, f"❌ 初始化失败: {str(e)}"
     
     def get_random_destination(self):
         """获取随机目的地"""
@@ -438,7 +289,7 @@ class DeepSeekTravelAgent:
             "纽约, 美国", "伦敦, 英国", "悉尼, 澳大利亚",
             "罗马, 意大利", "京都, 日本", "新加坡",
             "开普敦, 南非", "里约热内卢, 巴西", "迪拜, 阿联酋",
-            "北京, 中国", "上海, 中国", "中国香港, 中国", "台北, 中国台湾",
+            "北京, 中国", "上海, 中国", "香港, 中国", "台北, 台湾",
             "清迈, 泰国", "巴厘岛, 印度尼西亚", "布拉格, 捷克"
         ]
         return random.choice(destinations)
@@ -462,7 +313,7 @@ class DeepSeekTravelAgent:
     def process_request(self, user_input):
         """处理用户请求"""
         if not self.initialized:
-            return "代理未初始化，请先在侧边栏点击初始化按钮"
+            return "❌ 代理未初始化，请先在侧边栏点击初始化按钮"
         
         try:
             # 智能工具调用检测
@@ -479,7 +330,7 @@ class DeepSeekTravelAgent:
                 tools_used.append("💡 提供了基础旅行贴士")
                 enhanced_prompt = f"{user_input}\n\n参考旅行贴士: {tips}"
             
-            # 系统提示词
+            # 完整的系统提示词
             system_message = """你是一个专业、友好、经验丰富的旅行规划专家。请用中文回复，遵循以下原则：
 
 # 角色设定
@@ -493,11 +344,20 @@ class DeepSeekTravelAgent:
 5. **热情友好**：保持积极、鼓励的语气，让用户感受到专业和温暖
 6. **文化敏感**：尊重各地文化差异，提供文化体验建议
 
+# 内容结构
+- 行程概览
+- 每日详细安排
+- 餐饮推荐
+- 交通指南
+- 预算分析
+- 实用贴士
+- 文化体验
+
 请为用户创造难忘的旅行体验！"""
             
             # 调用DeepSeek API
             response = self.client.chat.completions.create(
-                model="deepseek-chat",
+                model="deepseek-chat",  # DeepSeek的主要模型
                 messages=[
                     {"role": "system", "content": system_message},
                     {"role": "user", "content": enhanced_prompt}
@@ -519,11 +379,11 @@ class DeepSeekTravelAgent:
         except Exception as e:
             error_msg = str(e)
             if "quota" in error_msg.lower() or "limit" in error_msg.lower():
-                return "API调用额度已用完，请检查DeepSeek账户余额或等待额度重置"
+                return "❌ API调用额度已用完，请检查DeepSeek账户余额或等待额度重置"
             elif "auth" in error_msg.lower() or "key" in error_msg.lower():
-                return "API密钥无效，请检查DeepSeek API密钥配置"
+                return "❌ API密钥无效，请检查DeepSeek API密钥配置"
             else:
-                return f"处理请求时出错: {error_msg}"
+                return f"❌ 处理请求时出错: {error_msg}"
 
 # 初始化session state
 if "messages" not in st.session_state:
@@ -535,145 +395,113 @@ if "agent_status" not in st.session_state:
 if "conversation_count" not in st.session_state:
     st.session_state.conversation_count = 0
 
+# 主标题
+st.markdown('<h1 class="main-header">🏖️ AI 智能旅行规划代理 <span class="deepseek-badge">DeepSeek</span></h1>', unsafe_allow_html=True)
+
 # 侧边栏
 with st.sidebar:
-    st.markdown("### ⚙️ 控制中心")
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.header("🚀 控制面板")
     
     # 系统状态
-    status_class = "status-online" if st.session_state.agent.initialized else "status-offline"
-    dot_class = "status-dot-online" if st.session_state.agent.initialized else "status-dot-offline"
-    status_text = "已连接" if st.session_state.agent.initialized else "未连接"
+    st.subheader("📊 系统状态")
+    status_indicator = "status-online" if ENV_LOADED else "status-offline"
+    st.markdown(f'<span class="status-indicator {status_indicator}"></span>环境状态', unsafe_allow_html=True)
     
-    st.markdown(f'''
-    <div class="status-badge {status_class}">
-        <div class="status-dot {dot_class}"></div>
-        {status_text}
-    </div>
-    ''', unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    # 初始化按钮
-    if st.button("🚀 初始化AI助手", use_container_width=True, type="primary"):
-        with st.spinner("正在连接..."):
+    # 初始化代理按钮
+    if st.button("🔄 初始化AI代理", use_container_width=True, type="primary"):
+        with st.spinner("初始化中..."):
             success, status = st.session_state.agent.initialize()
             st.session_state.agent_status = status
             if success:
-                st.success("✓ 连接成功")
+                st.success("初始化成功！")
             else:
-                st.error("✗ 连接失败")
+                st.error("初始化失败")
             st.rerun()
     
-    st.markdown("---")
+    # 显示代理状态
+    st.subheader("🔧 代理状态")
+    status_color = "🟢" if "成功" in st.session_state.agent_status else "🔴"
+    st.markdown(f"{status_color} {st.session_state.agent_status}")
+    st.markdown("</div>", unsafe_allow_html=True)
     
-    # 快速操作
-    st.markdown("### ⚡ 快速开始")
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.subheader("⚡ 快速操作")
     
     quick_actions = [
-        ("🎲", "随机目的地", "推荐一个随机旅行目的地并详细规划"),
-        ("📅", "三日游", "帮我规划一个精彩的三天旅行行程"),
-        ("🌅", "单日游", "规划一个充实的一日游行程"),
-        ("💡", "旅行贴士", "给我全面的旅行准备建议和贴士"),
-        ("🏨", "周末之旅", "规划一个放松的周末短途旅行"),
-        ("💰", "预算旅行", "推荐经济实惠的旅行方案"),
+        ("🎲 随机目的地", "推荐一个随机旅行目的地并详细规划"),
+        ("📅 三日游", "帮我规划一个精彩的三天旅行行程"),
+        ("🌅 单日游", "规划一个充实的一日游行程"),
+        ("💡 旅行贴士", "给我全面的旅行准备建议和贴士"),
+        ("🏨 周末之旅", "规划一个放松的周末短途旅行"),
+        ("💰 预算旅行", "推荐经济实惠的旅行方案"),
+        ("🌍 文化体验", "推荐有文化深度的旅行体验"),
+        ("🍽️ 美食之旅", "规划以美食为主题的旅行")
     ]
     
-    for icon, text, command in quick_actions:
-        if st.button(f"{icon} {text}", use_container_width=True, key=f"quick_{text}"):
+    for text, command in quick_actions:
+        if st.button(text, use_container_width=True):
             st.session_state.messages.append({"role": "user", "content": command})
             st.rerun()
     
-    st.markdown("---")
-    
-    # 统计信息
-    st.markdown("### 📊 会话统计")
-    st.markdown(f'<div class="stat-number">{st.session_state.conversation_count}</div>', unsafe_allow_html=True)
-    st.markdown("对话轮次")
-    
-    st.markdown("---")
-    
-    # 清空按钮
-    if st.button("🗑️ 清空对话", use_container_width=True):
+    if st.button("🔄 清空对话", use_container_width=True):
         st.session_state.messages = []
-        st.session_state.conversation_count = 0
         st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
     
-    st.markdown("---")
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.subheader("📈 会话统计")
+    st.info(f"对话轮次: {st.session_state.conversation_count}")
+    st.markdown("</div>", unsafe_allow_html=True)
     
-    # 使用提示
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.subheader("💡 使用提示")
     st.markdown("""
-    <div class="info-card">
-        <div class="info-card-title">💡 使用技巧</div>
-        <div class="info-card-content">
-        • 描述详细需求获得更好结果<br>
-        • 可指定预算、兴趣、季节<br>
-        • 支持多轮对话完善计划<br>
-        • 基于 DeepSeek 智能模型
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    - 🎯 **具体需求**获得更好结果
+    - 🌍 **指定偏好**如预算、兴趣、季节
+    - 💬 **多轮对话**完善旅行计划
+    - ⚡ **先初始化**代理再使用
+    - 🆓 **DeepSeek** 提供免费API额度
+    """)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# 主内容区域
-# 顶部标题
-st.markdown('''
-<div class="header-container">
-    <div class="main-title">✈️ AI 旅行规划助手 <span class="badge">DeepSeek</span></div>
-    <div class="subtitle">探索世界，规划完美旅程</div>
-</div>
-''', unsafe_allow_html=True)
-
-# 对话区域
+# 主对话区域
 chat_container = st.container()
-chat_container.markdown('<div class="chat-container">', unsafe_allow_html=True)
 
 with chat_container:
     # 显示欢迎信息
     if len(st.session_state.messages) == 0:
-        st.markdown('''
-        <div class="welcome-card">
-            <div class="welcome-title">👋 你好！我是你的AI旅行规划助手</div>
-            <div class="welcome-text">我可以帮你规划完美的旅行行程、推荐目的地，并提供专业的旅行建议</div>
-            <div class="welcome-text">💬 请先在左侧点击"初始化AI助手"，然后告诉我你的旅行想法</div>
-        </div>
-        ''', unsafe_allow_html=True)
+        st.markdown('<div class="main-container">', unsafe_allow_html=True)
+        st.markdown('<div class="system-message">🚀 欢迎使用基于DeepSeek的AI旅行规划代理！</div>', unsafe_allow_html=True)
+        st.markdown('<div class="system-message">💡 我可以帮您：规划旅行行程、推荐目的地、提供详细旅行建议</div>', unsafe_allow_html=True)
+        st.markdown('<div class="system-message">🎯 基于DeepSeek大模型，提供智能、专业的旅行规划服务</div>', unsafe_allow_html=True)
+        st.markdown('<div class="system-message">👇 请在侧边栏点击"初始化AI代理"，然后开始使用</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # 显示对话历史
     for message in st.session_state.messages:
         if message["role"] == "user":
-            st.markdown(f'''
-            <div class="chat-message user-message">
-                <div class="message-role">👤 你</div>
-                <div class="message-content">{message["content"]}</div>
-            </div>
-            ''', unsafe_allow_html=True)
+            st.markdown(f'<div class="user-message">👤 您: {message["content"]}</div>', unsafe_allow_html=True)
         else:
-            st.markdown(f'''
-            <div class="chat-message assistant-message">
-                <div class="message-role">🤖 AI助手</div>
-                <div class="message-content">{message["content"]}</div>
-            </div>
-            ''', unsafe_allow_html=True)
+            st.markdown(f'<div class="assistant-message">🤖 AI: {message["content"]}</div>', unsafe_allow_html=True)
 
-chat_container.markdown('</div>', unsafe_allow_html=True)
+# 用户输入区域
+st.markdown("---")
+st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+st.subheader("💬 与AI旅行专家对话")
 
-# 输入区域
-st.markdown('<div class="input-container">', unsafe_allow_html=True)
-
-input_col1, input_col2 = st.columns([5, 1])
+input_col1, input_col2 = st.columns([4, 1])
 
 with input_col1:
     user_input = st.text_input(
-        "消息",
-        placeholder="描述你的旅行想法..." if st.session_state.agent.initialized else "请先初始化AI助手...",
+        "输入您的旅行需求:",
+        placeholder="例如：帮我规划一个巴黎三日游，预算中等，喜欢文化和美食..." if st.session_state.agent.initialized else "请先在侧边栏初始化AI代理...",
         label_visibility="collapsed",
-        disabled=not st.session_state.agent.initialized,
-        key="user_input"
+        disabled=not st.session_state.agent.initialized
     )
 
 with input_col2:
-    # 使用自定义样式的发送按钮
-    send_button = st.button("➤", use_container_width=True, disabled=not st.session_state.agent.initialized, type="primary")
-
+    send_button = st.button("发送", use_container_width=True, disabled=not st.session_state.agent.initialized)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # 处理用户输入
@@ -682,8 +510,8 @@ if send_button and user_input and st.session_state.agent.initialized:
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.session_state.conversation_count += 1
     
-    # 获取AI响应
-    with st.spinner("思考中..."):
+    # 显示AI响应
+    with st.spinner("🤔 AI旅行专家思考中..."):
         try:
             ai_response = st.session_state.agent.process_request(user_input)
             st.session_state.messages.append({"role": "assistant", "content": ai_response})
@@ -693,3 +521,22 @@ if send_button and user_input and st.session_state.agent.initialized:
             error_msg = f"抱歉，处理请求时出错: {str(e)}"
             st.session_state.messages.append({"role": "assistant", "content": error_msg})
             st.rerun()
+
+# 页脚
+st.markdown("---")
+st.markdown(
+    '<div class="footer">'
+    "🤖 基于 DeepSeek 大模型构建 | 🏖️ AI 旅行规划代理 | 🌐 部署于 Streamlit Cloud"
+    "</div>",
+    unsafe_allow_html=True
+)
+
+# 背景图片设置说明
+st.sidebar.markdown("---")
+st.sidebar.markdown('<div class="glass-card">', unsafe_allow_html=True)
+st.sidebar.subheader("🎨 背景设置")
+st.sidebar.info("如需自定义背景图片，请取消注释代码中的set_background()函数调用")
+st.sidebar.markdown("</div>", unsafe_allow_html=True)
+
+# 使用自定义背景图片（取消注释并替换图片路径即可使用）
+# set_background("your_background_image.jpg")
