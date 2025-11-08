@@ -21,12 +21,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 现代深色风格的CSS样式
+# 现代深色风格的CSS样式 - 优化版
 st.markdown("""
 <style>
     /* 全局样式 - 添加背景图片 */
     .stApp {
-        background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.5)), 
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), 
                     url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&q=80');
         background-size: cover;
         background-position: center;
@@ -44,7 +44,7 @@ st.markdown("""
     .header-container {
         background: transparent;
         padding: 1rem 0;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
         text-align: center;
     }
     
@@ -63,13 +63,14 @@ st.markdown("""
         text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
     }
     
-    /* 对话消息样式 - 深色主题 */
+    /* 对话消息样式 - 增强对比度 */
     .chat-message {
         padding: 1.25rem 1.5rem;
         margin: 0.75rem 0;
         border-radius: 16px;
         animation: fadeIn 0.3s ease-in;
         line-height: 1.6;
+        position: relative;
     }
     
     @keyframes fadeIn {
@@ -78,18 +79,19 @@ st.markdown("""
     }
     
     .user-message {
-        background: rgba(52, 53, 65, 0.9);
+        background: rgba(45, 45, 45, 0.95) !important;
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         margin-left: auto;
         max-width: 85%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     
     .assistant-message {
-        background: rgba(68, 70, 84, 0.9);
+        background: rgba(60, 60, 60, 0.95) !important;
         backdrop-filter: blur(10px);
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         max-width: 95%;
     }
     
@@ -100,36 +102,37 @@ st.markdown("""
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        color: rgba(255, 255, 255, 0.9);
+        color: rgba(255, 255, 255, 0.95);
     }
     
     .message-content {
-        color: rgba(255, 255, 255, 0.95);
+        color: rgba(255, 255, 255, 0.98);
         font-size: 0.95rem;
         white-space: pre-wrap;
+        line-height: 1.7;
     }
     
-    /* 欢迎卡片 - 紧凑简洁 */
+    /* 欢迎卡片 - 紧凑清晰设计 */
     .welcome-card {
-        background: rgba(68, 70, 84, 0.85);
+        background: rgba(45, 45, 45, 0.92) !important;
         backdrop-filter: blur(15px);
         border-radius: 16px;
         padding: 1.5rem 2rem;
-        margin: 1.5rem 0;
-        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        margin: 1rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         text-align: center;
     }
     
     .welcome-title {
-        font-size: 1.35rem;
+        font-size: 1.2rem;
         font-weight: 600;
         color: white;
         margin-bottom: 0.75rem;
     }
     
     .welcome-text {
-        color: rgba(255, 255, 255, 0.75);
+        color: rgba(255, 255, 255, 0.85);
         font-size: 0.9rem;
         line-height: 1.5;
         margin: 0.5rem 0;
@@ -137,7 +140,7 @@ st.markdown("""
     
     /* 侧边栏样式 */
     section[data-testid="stSidebar"] {
-        background: rgba(52, 53, 65, 0.95) !important;
+        background: rgba(30, 30, 30, 0.95) !important;
         backdrop-filter: blur(20px);
         border-right: 1px solid rgba(255, 255, 255, 0.1);
     }
@@ -163,60 +166,108 @@ st.markdown("""
         color: rgba(255, 255, 255, 0.9) !important;
     }
     
-    /* 按钮样式 */
+    /* 按钮样式 - 增强可见性 */
     .stButton button {
-        background: rgba(255, 255, 255, 0.12);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-        font-weight: 500;
-        padding: 0.65rem 1.25rem;
-        font-size: 0.95rem;
-        transition: all 0.2s ease;
-        width: 100%;
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        padding: 0.7rem 1.5rem !important;
+        font-size: 0.95rem !important;
+        transition: all 0.2s ease !important;
+        width: 100% !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
     }
     
     .stButton button:hover {
-        background: rgba(255, 255, 255, 0.2);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        background: rgba(255, 255, 255, 0.25) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
     }
     
     .stButton button:active {
-        transform: translateY(0);
+        transform: translateY(0) !important;
     }
     
-    /* 输入框样式 */
+    /* 主要按钮样式 */
+    .stButton button[kind="primary"] {
+        background: rgba(59, 130, 246, 0.8) !important;
+        border: 1px solid rgba(59, 130, 246, 0.9) !important;
+        color: white !important;
+        font-weight: 600 !important;
+    }
+    
+    .stButton button[kind="primary"]:hover {
+        background: rgba(59, 130, 246, 0.9) !important;
+        border: 1px solid rgba(59, 130, 246, 1) !important;
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4) !important;
+    }
+    
+    /* 输入框样式 - 增强对比度 */
     .stTextInput input {
-        background: rgba(64, 65, 79, 0.95) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        background: rgba(40, 40, 40, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 12px !important;
-        padding: 0.85rem 1.25rem !important;
+        padding: 0.9rem 1.25rem !important;
         font-size: 0.95rem !important;
         color: white !important;
-        transition: all 0.2s ease;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
     }
     
     .stTextInput input:focus {
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(59, 130, 246, 0.8) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
         outline: none !important;
-        background: rgba(64, 65, 79, 1) !important;
+        background: rgba(40, 40, 40, 1) !important;
     }
     
     .stTextInput input::placeholder {
-        color: rgba(255, 255, 255, 0.5) !important;
+        color: rgba(255, 255, 255, 0.6) !important;
     }
     
-    /* 输入区域容器 */
+    /* 输入区域容器 - 清晰背景 */
     .input-container {
-        background: rgba(52, 53, 65, 0.9);
+        background: rgba(35, 35, 35, 0.95) !important;
         backdrop-filter: blur(20px);
         border-radius: 18px;
         padding: 1.5rem;
         margin-top: 1.5rem;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    
+    /* 发送按钮特殊样式 */
+    .send-button {
+        background: rgba(59, 130, 246, 0.9) !important;
+        border: 1px solid rgba(59, 130, 246, 1) !important;
+        color: white !important;
+        border-radius: 12px !important;
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        padding: 0.8rem !important;
+        width: 100% !important;
+        height: 48px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+    }
+    
+    .send-button:hover {
+        background: rgba(59, 130, 246, 1) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4) !important;
+    }
+    
+    .send-button:disabled {
+        background: rgba(100, 100, 100, 0.5) !important;
+        border: 1px solid rgba(100, 100, 100, 0.7) !important;
+        color: rgba(255, 255, 255, 0.5) !important;
+        cursor: not-allowed !important;
     }
     
     /* 状态徽章 */
@@ -232,15 +283,15 @@ st.markdown("""
     }
     
     .status-online {
-        background: rgba(34, 197, 94, 0.15);
+        background: rgba(34, 197, 94, 0.2);
         color: #22c55e;
-        border: 1px solid rgba(34, 197, 94, 0.3);
+        border: 1px solid rgba(34, 197, 94, 0.4);
     }
     
     .status-offline {
-        background: rgba(239, 68, 68, 0.15);
+        background: rgba(239, 68, 68, 0.2);
         color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.3);
+        border: 1px solid rgba(239, 68, 68, 0.4);
     }
     
     .status-dot {
@@ -265,11 +316,11 @@ st.markdown("""
     
     /* 信息卡片 */
     .info-card {
-        background: rgba(68, 70, 84, 0.6);
+        background: rgba(45, 45, 45, 0.8);
         border-radius: 12px;
         padding: 1.25rem;
         margin: 1rem 0;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.12);
     }
     
     .info-card-title {
@@ -280,7 +331,7 @@ st.markdown("""
     }
     
     .info-card-content {
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.85);
         font-size: 0.9rem;
         line-height: 1.6;
     }
@@ -300,9 +351,9 @@ st.markdown("""
         border-radius: 12px;
         font-size: 0.8rem;
         font-weight: 600;
-        background: rgba(255, 255, 255, 0.15);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border: 1px solid rgba(59, 130, 246, 0.4);
     }
     
     /* 滚动条 */
@@ -342,6 +393,16 @@ st.markdown("""
     .stMarkdown, .stText {
         color: white;
     }
+    
+    /* 优化空白区域 */
+    .stEmpty {
+        background: transparent !important;
+    }
+    
+    /* 聊天容器间距优化 */
+    .chat-container {
+        margin-bottom: 1rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -377,7 +438,7 @@ class DeepSeekTravelAgent:
             "纽约, 美国", "伦敦, 英国", "悉尼, 澳大利亚",
             "罗马, 意大利", "京都, 日本", "新加坡",
             "开普敦, 南非", "里约热内卢, 巴西", "迪拜, 阿联酋",
-            "北京, 中国", "上海, 中国", "香港, 中国", "台北, 台湾",
+            "北京, 中国", "上海, 中国", "中国香港, 中国", "台北, 中国台湾",
             "清迈, 泰国", "巴厘岛, 印度尼西亚", "布拉格, 捷克"
         ]
         return random.choice(destinations)
@@ -563,6 +624,7 @@ st.markdown('''
 
 # 对话区域
 chat_container = st.container()
+chat_container.markdown('<div class="chat-container">', unsafe_allow_html=True)
 
 with chat_container:
     # 显示欢迎信息
@@ -592,6 +654,8 @@ with chat_container:
             </div>
             ''', unsafe_allow_html=True)
 
+chat_container.markdown('</div>', unsafe_allow_html=True)
+
 # 输入区域
 st.markdown('<div class="input-container">', unsafe_allow_html=True)
 
@@ -607,6 +671,7 @@ with input_col1:
     )
 
 with input_col2:
+    # 使用自定义样式的发送按钮
     send_button = st.button("➤", use_container_width=True, disabled=not st.session_state.agent.initialized, type="primary")
 
 st.markdown('</div>', unsafe_allow_html=True)
