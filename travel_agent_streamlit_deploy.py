@@ -21,13 +21,28 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 玻璃材质CSS样式
+# 修复后的玻璃材质CSS样式
 st.markdown("""
 <style>
     /* 全局样式 */
     .stApp {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         background-attachment: fixed;
+    }
+    
+    /* 修复Streamlit控件可见性 */
+    #MainMenu {visibility: visible !important;}
+    footer {visibility: visible !important;}
+    header {visibility: visible !important;}
+    
+    /* 确保侧边栏按钮可见 */
+    .css-1lcbmhc.e1fqkh3o0 {
+        visibility: visible !important;
+    }
+    
+    /* 侧边栏展开按钮样式 */
+    .st-emotion-cache-1dp5vir {
+        visibility: visible !important;
     }
     
     /* 玻璃拟态效果基础样式 */
@@ -99,11 +114,16 @@ st.markdown("""
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
     
-    /* 侧边栏样式 */
-    .css-1d391kg, .css-1lcbmhc {
+    /* 侧边栏样式 - 修复版本 */
+    section[data-testid="stSidebar"] {
         background: rgba(255, 255, 255, 0.1) !important;
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    section[data-testid="stSidebar"] > div {
+        background: transparent !important;
     }
     
     /* 输入框样式 */
@@ -117,6 +137,10 @@ st.markdown("""
     .stTextInput input:focus {
         border: 1px solid rgba(255, 255, 255, 0.5);
         box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+    }
+    
+    .stTextInput input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
     }
     
     /* 徽章样式 */
@@ -149,28 +173,41 @@ st.markdown("""
         box-shadow: 0 0 8px #f44336;
     }
     
-    /* 标签样式 */
-    .stTabs [data-baseweb="tab-list"] {
+    /* 修复Streamlit默认组件样式 */
+    .st-bh, .st-bg, .st-be, .st-bf, .st-bi, .st-bj {
+        background: transparent !important;
+    }
+    
+    /* 确保文本颜色可见 */
+    .st-bb, .st-bc, .st-bd {
+        color: white !important;
+    }
+    
+    /* 修复菜单按钮 */
+    .st-emotion-cache-1dp5vir {
+        background: rgba(255, 255, 255, 0.2) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+    
+    /* 修复滚动条 */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
         background: rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 8px;
-        gap: 8px;
+        border-radius: 4px;
     }
     
-    .stTabs [data-baseweb="tab"] {
-        background: transparent;
-        border-radius: 8px;
-        color: white;
+    ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
     }
     
-    .stTabs [aria-selected="true"] {
-        background: rgba(255, 255, 255, 0.2);
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
     }
-    
-    /* 隐藏不必要的元素 */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
