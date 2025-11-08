@@ -82,17 +82,18 @@ st.markdown("""
     }
     
     .user-message {
-        background: rgba(16, 163, 127, 0.12);
-        border: 1px solid rgba(16, 163, 127, 0.2);
+        background: rgba(52, 53, 65, 0.85);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         margin-left: auto;
         max-width: 85%;
     }
     
     .assistant-message {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(20px);
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        background: rgba(68, 70, 84, 0.85);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         max-width: 95%;
     }
     
